@@ -37,7 +37,7 @@ defmodule GithubPoller.Client do
     encode!(%{
       "query" => """
         query {
-        repository(name: \"#{repository}\", owner: \"#{owner}\") {
+        repository(name: #{inspect(repository)}, owner: #{inspect(owner)}) {
           pullRequests(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
             nodes {
               number
