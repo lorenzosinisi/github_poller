@@ -1,21 +1,13 @@
 # GithubPoller
 
-**TODO: Add description**
+**WIP implementation of Github Client Poller**
 
-## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `github_poller` to your list of dependencies in `mix.exs`:
+## Client Usage
 
 ```elixir
-def deps do
-  [
-    {:github_poller, "~> 0.1.0"}
-  ]
-end
+token = "your github token here"
+github_org_name = "lorenzosinisi"
+github_repo_name = "retex"
+GithubPoller.Client.latest_prs(token, github_org_name, github_repo_name)
 ```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/github_poller](https://hexdocs.pm/github_poller).
 
