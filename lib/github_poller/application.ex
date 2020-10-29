@@ -7,8 +7,7 @@ defmodule GithubPoller.Application do
 
   def start(_type, _args) do
     children = [
-      # Starts a worker by calling: GithubPoller.Worker.start_link(arg)
-      # {GithubPoller.Worker, arg}
+      {Finch, name: GithubPoller.Client}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
