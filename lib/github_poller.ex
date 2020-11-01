@@ -37,6 +37,7 @@ defmodule GithubPoller do
 
     #   2. Send a single message to the client process containing all updated pull requests
     if MapSet.equal?(difference, MapSet.new()) do
+      IO.inspect(difference, label: :is_equal)
       {:noreply, state}
     else
       send(
