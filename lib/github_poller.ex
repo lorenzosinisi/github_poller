@@ -35,13 +35,13 @@ defmodule GithubPoller do
     #   2. Send a single message to the client process containing all updated pull requests
     #   3. Update the state to contain the new repo state
     IO.puts("got github data")
-    changes = MapSet.difference(state.repo_state, new_repo_state)
+    changes = MapSet.difference(new_repo_state, state.repo_state)
     intersection = MapSet.intersection(state.repo_state, new_repo_state)
     new_repo_state = MapSet.union(intersection, changes)
 
     send(
       state.notify,
-      IO.inspect({:repo_update, %{owner: state.owner, repo: state.repo, changes: new_repo_state}})
+      IO.inspect({:repo_update, %{owner: state.owner, repo: state.repo, changes: changes}})
     )
 
     {:noreply, %{state | repo_state: new_repo_state}}
