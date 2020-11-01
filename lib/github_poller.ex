@@ -65,24 +65,27 @@ defmodule GithubPoller do
   end
 
   defp poll(parent, github_opts) do
-    IO.puts("polling github")
-    data = fetch_repo_state!(github_opts)
+    transform = fn data ->
+      data
+      |> Enum.map(fn pr -> {Map.get(pr, "number"), Map.get(pr, "headRefOid")} end)
+      |> Enum.into(%{})
+      |> MapSet.new()
+    end
+
+    {:ok, data} = fetch_repo_state!(github_opts, transform)
     send(parent, {:github_data, data})
   end
 
-  defp fetch_repo_state!(%{api_token: token, owner: owner, repo: repository}) do
+  defp fetch_repo_state!(%{api_token: token, owner: owner, repo: repository}, transform) do
     token
     |> GithubPoller.Client.latest_prs(owner, repository)
     |> GithubPoller.Client.request()
     |> case do
       {:ok, data} ->
-        data
-        |> Enum.map(fn pr -> {Map.get(pr, "number"), Map.get(pr, "headRefOid")} end)
-        |> Enum.into(%{})
-        |> MapSet.new()
+        {:ok, transform.(data)}
 
       error ->
-        raise(error)
+        error
     end
   end
 end
