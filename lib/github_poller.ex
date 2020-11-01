@@ -32,25 +32,19 @@ defmodule GithubPoller do
     # This is invoked when poll result arrived. At this point, we need to do the following:
     #
     #   1. Figure out the diff between the new state and the one we have in `state.new_repo_state`
-
-    difference = MapSet.difference(state.repo_state, new_repo_state)
-
     #   2. Send a single message to the client process containing all updated pull requests
+    #   3. Update the state to contain the new repo state
+    IO.puts("got github data")
+    changes = MapSet.difference(state.repo_state, new_repo_state)
+    intersection = MapSet.intersection(state.repo_state, new_repo_state)
+    new_repo_state = MapSet.union(intersection, changes)
+
     send(
       state.notify,
-      IO.inspect({:repo_update, %{owner: state.owner, repo: state.repo, changes: difference}},
-        label: :something_changed
-      )
+      IO.inspect({:repo_update, %{owner: state.owner, repo: state.repo, changes: new_repo_state}})
     )
 
-    #   3. Update the state to contain the new repo state
-    repo_state =
-      state
-      |> Map.get(:repo_state)
-      |> MapSet.intersection(new_repo_state)
-      |> MapSet.union(difference)
-
-    {:noreply, %{state | repo_state: repo_state}}
+    {:noreply, %{state | repo_state: new_repo_state}}
   end
 
   defp start_poller(state) do
