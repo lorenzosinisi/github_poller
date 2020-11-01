@@ -23,7 +23,10 @@ defmodule GithubPoller.MixProject do
   defp deps do
     [
       {:finch, "~> 0.5"},
-      {:jason, "~> 1.2"}
+      {:jason, "~> 1.2"},
+      {:parent, "~> 0.11.2"},
+      {:credo, "~> 1.5", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
     ]
   end
 end

@@ -9,11 +9,10 @@ defmodule GithubPoller.Client do
   defdelegate encode!(body), to: Jason
   defdelegate decode!(body), to: Jason
   defdelegate build(method, endpoint, headers, body), to: Finch
-  defdelegate request(request, module), to: Finch
 
-  @spec request(Finch.Request.t()) :: {:ok, map()} | {:error, any()}
-  def request(request) do
-    case request(request, __MODULE__) do
+  @spec request(Finch.Request.t(), atom()) :: {:ok, map()} | {:error, any()}
+  def request(%Finch.Request{} = request, http_client_mod \\ Finch) do
+    case http_client_mod.request(request, __MODULE__) do
       {:ok, %{status: 200, body: body}} ->
         {:ok, decode!(body)}
 
@@ -22,7 +21,7 @@ defmodule GithubPoller.Client do
     end
   end
 
-  @spec latest_prs(token(), owner(), reponsitory()) :: {:ok, map()} | {:error, any()}
+  @spec latest_prs(token(), owner(), reponsitory()) :: Finch.Request.t()
   def latest_prs(token, owner, repository) when is_binary(token) do
     build(
       :post,
@@ -30,7 +29,6 @@ defmodule GithubPoller.Client do
       [{"Authorization", "bearer #{token}"}],
       lastest_prs_query(owner, repository)
     )
-    |> request()
   end
 
   defp lastest_prs_query(owner, repository) when is_binary(owner) and is_binary(repository) do
