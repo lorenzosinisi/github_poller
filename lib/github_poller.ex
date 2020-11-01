@@ -36,26 +36,21 @@ defmodule GithubPoller do
     difference = MapSet.difference(state.repo_state, new_repo_state)
 
     #   2. Send a single message to the client process containing all updated pull requests
-    if MapSet.equal?(difference, MapSet.new()) do
-      IO.inspect(difference, label: :is_equal)
-      {:noreply, state}
-    else
-      send(
-        state.notify,
-        IO.inspect({:repo_update, %{owner: state.owner, repo: state.repo, changes: difference}},
-          label: :something_changed
-        )
+    send(
+      state.notify,
+      IO.inspect({:repo_update, %{owner: state.owner, repo: state.repo, changes: difference}},
+        label: :something_changed
       )
+    )
 
-      #   3. Update the state to contain the new repo state
-      repo_state =
-        state
-        |> Map.get(:repo_state)
-        |> MapSet.intersection(new_repo_state)
-        |> MapSet.union(difference)
+    #   3. Update the state to contain the new repo state
+    repo_state =
+      state
+      |> Map.get(:repo_state)
+      |> MapSet.intersection(new_repo_state)
+      |> MapSet.union(difference)
 
-      {:noreply, %{state | repo_state: repo_state}}
-    end
+    {:noreply, %{state | repo_state: repo_state}}
   end
 
   defp start_poller(state) do
