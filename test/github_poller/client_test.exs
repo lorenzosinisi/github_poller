@@ -51,36 +51,28 @@ defmodule GithubPoller.ClientTest do
   describe "request/2" do
     test "when the response is 200 and there is a body" do
       assert {:ok,
-              %{
-                "data" => %{
-                  "repository" => %{
-                    "pullRequests" => %{
-                      "nodes" => [
-                        %{
-                          "baseRefName" => "master",
-                          "headRefName" => "relationships-within-objects",
-                          "headRefOid" => "369e0d05c258f53215d7b93d0a094884d2d44350",
-                          "mergeable" => "UNKNOWN",
-                          "number" => 5,
-                          "potentialMergeCommit" => nil,
-                          "reviews" => %{"nodes" => []},
-                          "title" => "Relationships within objects"
-                        },
-                        %{
-                          "baseRefName" => "master",
-                          "headRefName" => "add-timestamp-and-specs",
-                          "headRefOid" => "f526c787f9c0b506066b9613e1d50fbd4c1644a0",
-                          "mergeable" => "UNKNOWN",
-                          "number" => 4,
-                          "potentialMergeCommit" => nil,
-                          "reviews" => %{"nodes" => []},
-                          "title" => "Add timestamp and specs"
-                        }
-                      ]
-                    }
-                  }
+              [
+                %{
+                  "baseRefName" => "master",
+                  "headRefName" => "relationships-within-objects",
+                  "headRefOid" => "369e0d05c258f53215d7b93d0a094884d2d44350",
+                  "mergeable" => "UNKNOWN",
+                  "number" => 5,
+                  "potentialMergeCommit" => nil,
+                  "reviews" => %{"nodes" => []},
+                  "title" => "Relationships within objects"
+                },
+                %{
+                  "baseRefName" => "master",
+                  "headRefName" => "add-timestamp-and-specs",
+                  "headRefOid" => "f526c787f9c0b506066b9613e1d50fbd4c1644a0",
+                  "mergeable" => "UNKNOWN",
+                  "number" => 4,
+                  "potentialMergeCommit" => nil,
+                  "reviews" => %{"nodes" => []},
+                  "title" => "Add timestamp and specs"
                 }
-              }} ==
+              ]} ==
                "Token"
                |> Client.latest_prs("lorenzosinisi", "somerepo")
                |> GithubPoller.Client.request(SuccessHttpClient)

@@ -14,7 +14,8 @@ defmodule GithubPoller.Client do
   def request(%Finch.Request{} = request, http_client_mod \\ Finch) do
     case http_client_mod.request(request, __MODULE__) do
       {:ok, %{status: 200, body: body}} ->
-        {:ok, decode!(body)}
+        response = decode!(body)
+        {:ok, get_in(response, ["data", "repository", "pullRequests", "nodes"])}
 
       anything ->
         anything
