@@ -1,5 +1,6 @@
 defmodule GithubPoller do
   use Parent.GenServer
+  alias GithubPoller.PullRequest
 
   # Expected usage:
   #
@@ -19,7 +20,7 @@ defmodule GithubPoller do
   def init(opts) do
     # repo_state will contain the known state of the given repo, such as open pull request with
     # the last fetched data
-    state = Enum.into(opts, %{initialized: false, repo_state: MapSet.new([])})
+    state = Enum.into(opts, PullRequest.new()) |> IO.inspect(label: :state)
 
     # starts the periodic poller
     start_poller(state)
@@ -28,33 +29,22 @@ defmodule GithubPoller do
   end
 
   @impl GenServer
-  def handle_info({:github_data, new_repo_state}, %{initialized: true} = state) do
-    # This is invoked when poll result arrived. At this point, we need to do the following:
-    #
-    #   1. Figure out the diff between the new state and the one we have in `state.new_repo_state`
-    #   2. Send a single message to the client process containing all updated pull requests
-    #   3. Update the state to contain the new repo state
-    IO.puts("got github data")
-    changes = MapSet.difference(new_repo_state, state.repo_state)
-    intersection = MapSet.intersection(state.repo_state, new_repo_state)
-    new_repo_state = MapSet.union(intersection, changes)
-    IO.inspect(changes)
+  def handle_info({:new_repo_state, new_repo_state}, %{initialized: true} = state) do
+    changes = PullRequest.changes(state, new_repo_state)
 
-    send(
-      state.notify,
-      IO.inspect({:repo_update, %{owner: state.owner, repo: state.repo, changes: changes}})
-    )
+    if Enum.any?(changes) do
+      send(
+        state.notify,
+        IO.inspect({:repo_update, %{owner: state.owner, repo: state.repo, changes: changes}})
+      )
+    end
 
-    {:noreply, %{state | initialized: true, repo_state: new_repo_state}}
+    {:noreply, PullRequest.update_state(state, new_repo_state)}
   end
 
   @impl GenServer
-  def handle_info({:github_data, new_repo_state}, state) do
-    changes = MapSet.difference(new_repo_state, state.repo_state)
-    intersection = MapSet.intersection(state.repo_state, new_repo_state)
-    new_repo_state = MapSet.union(intersection, changes)
-
-    {:noreply, %{state | initialized: true, repo_state: new_repo_state}}
+  def handle_info({:new_repo_state, new_repo_state}, state) do
+    {:noreply, PullRequest.update_state(state, new_repo_state)}
   end
 
   defp start_poller(state) do
@@ -75,27 +65,7 @@ defmodule GithubPoller do
   end
 
   defp poll(parent, github_opts) do
-    transform = fn data ->
-      data
-      |> Enum.map(fn pr -> {Map.get(pr, "number"), Map.get(pr, "headRefOid")} end)
-      |> Enum.into(%{})
-      |> MapSet.new()
-    end
-
-    {:ok, data} = fetch_repo_state!(github_opts, transform)
-    send(parent, {:github_data, data})
-  end
-
-  defp fetch_repo_state!(%{api_token: token, owner: owner, repo: repository}, transform) do
-    token
-    |> GithubPoller.Client.latest_prs(owner, repository)
-    |> GithubPoller.Client.request()
-    |> case do
-      {:ok, data} ->
-        {:ok, transform.(data)}
-
-      error ->
-        error
-    end
+    {:ok, new_state} = PullRequest.fetch_repo_state!(github_opts)
+    send(parent, {:new_repo_state, new_state})
   end
 end
