@@ -19,7 +19,7 @@ defmodule GithubPoller do
   def init(opts) do
     # repo_state will contain the known state of the given repo, such as open pull request with
     # the last fetched data
-    state = Enum.into(opts, %{repo_state: MapSet.new([])})
+    state = Enum.into(opts, %{initialized: false, repo_state: MapSet.new([])})
 
     # starts the periodic poller
     start_poller(state)
@@ -28,7 +28,7 @@ defmodule GithubPoller do
   end
 
   @impl GenServer
-  def handle_info({:github_data, new_repo_state}, state) do
+  def handle_info({:github_data, new_repo_state}, %{initialized: true} = state) do
     # This is invoked when poll result arrived. At this point, we need to do the following:
     #
     #   1. Figure out the diff between the new state and the one we have in `state.new_repo_state`
@@ -38,13 +38,23 @@ defmodule GithubPoller do
     changes = MapSet.difference(new_repo_state, state.repo_state)
     intersection = MapSet.intersection(state.repo_state, new_repo_state)
     new_repo_state = MapSet.union(intersection, changes)
+    IO.inspect(changes)
 
     send(
       state.notify,
       IO.inspect({:repo_update, %{owner: state.owner, repo: state.repo, changes: changes}})
     )
 
-    {:noreply, %{state | repo_state: new_repo_state}}
+    {:noreply, %{state | initialized: true, repo_state: new_repo_state}}
+  end
+
+  @impl GenServer
+  def handle_info({:github_data, new_repo_state}, state) do
+    changes = MapSet.difference(new_repo_state, state.repo_state)
+    intersection = MapSet.intersection(state.repo_state, new_repo_state)
+    new_repo_state = MapSet.union(intersection, changes)
+
+    {:noreply, %{state | initialized: true, repo_state: new_repo_state}}
   end
 
   defp start_poller(state) do
