@@ -1,7 +1,7 @@
 defmodule GithubPoller do
   use Parent.GenServer
   alias GithubPoller.PullRequest
-
+  require Logger
   # Expected usage:
   #
   #   GithubPoller.start_link(api_token: "foo", owner: "bar", repo: "baz", notify: self())
@@ -20,7 +20,7 @@ defmodule GithubPoller do
   def init(opts) do
     # repo_state will contain the known state of the given repo, such as open pull request with
     # the last fetched data
-    state = Enum.into(opts, PullRequest.new()) |> IO.inspect(label: :state)
+    state = Enum.into(opts, PullRequest.new())
 
     # starts the periodic poller
     start_poller(state)
@@ -33,9 +33,11 @@ defmodule GithubPoller do
     changes = PullRequest.changes(state, new_repo_state)
 
     if Enum.any?(changes) do
+      Logger.debug("#{__MODULE__} received :new_repo_state with changes: #{inspect(changes)}")
+
       send(
         state.notify,
-        IO.inspect({:repo_update, %{owner: state.owner, repo: state.repo, changes: changes}})
+        {:repo_update, %{owner: state.owner, repo: state.repo, changes: changes}}
       )
     end
 
