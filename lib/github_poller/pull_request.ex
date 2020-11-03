@@ -9,7 +9,13 @@ defmodule GithubPoller.PullRequest do
     The state of pull requests, it works as a container
     for and it is used to manipulate pull requests data
     """
-    defstruct initialized: false, repo_state: MapSet.new(), owner: "", repo: "", notify: nil
+    defstruct initialized: false,
+              repo_state: MapSet.new(),
+              owner: "",
+              repo: "",
+              notify: nil,
+              api_token: nil,
+              every: :timer.seconds(5)
 
     defimpl Collectable do
       def into(original) do
@@ -25,7 +31,7 @@ defmodule GithubPoller.PullRequest do
   end
 
   @spec new() :: GithubPoller.PullRequest.State.t()
-  def new(), do: %PullRequest.State{}
+  def new(), do: %PullRequest.State{notify: self()}
 
   def changes(%PullRequest.State{repo_state: before}, %PullRequest.State{repo_state: now}) do
     MapSet.difference(now, before)

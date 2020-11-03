@@ -39,6 +39,8 @@ defmodule GithubPoller do
         state.notify,
         {:repo_update, %{owner: state.owner, repo: state.repo, changes: changes}}
       )
+    else
+      Logger.debug("#{__MODULE__} received :new_repo_state with 0 changes")
     end
 
     {:noreply, PullRequest.update_state(state, new_repo_state)}
@@ -55,11 +57,11 @@ defmodule GithubPoller do
 
     parent = self()
     github_opts = Map.take(state, [:api_token, :owner, :repo])
+    every = Map.get(state, :every)
 
     Parent.start_child({
       Periodic,
-      # We could fetch the poll interval from user provided opts
-      every: :timer.seconds(5),
+      every: every,
       run: fn -> poll(parent, github_opts) end,
       initial_delay: 0,
       on_overlap: :stop_previous
