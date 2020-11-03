@@ -54,8 +54,13 @@ defmodule GithubPoller.PullRequest do
 
   defp transform(data) do
     data
-    |> Enum.map(fn pr -> {Map.get(pr, "number"), Map.get(pr, "headRefOid")} end)
-    |> Enum.into(%{})
+    |> Enum.map(fn pr ->
+      %{
+        number: Map.get(pr, "number"),
+        hash: Map.get(pr, "headRefOid"),
+        title: Map.get(pr, "title")
+      }
+    end)
     |> MapSet.new()
   end
 end

@@ -41,12 +41,7 @@ defmodule GithubPoller.Client do
             nodes {
               number
               title
-              mergeable
-              potentialMergeCommit {oid}
               headRefOid
-              headRefName
-              baseRefName
-              reviews(states: [APPROVED, DISMISSED, CHANGES_REQUESTED], last: 1) {nodes {state}}
             }
           }
         }
