@@ -25,7 +25,6 @@ defmodule GithubPoller.PullRequest do
   end
 
   @spec new() :: GithubPoller.PullRequest.State.t()
-
   def new(), do: %PullRequest.State{}
 
   def changes(%PullRequest.State{repo_state: before}, %PullRequest.State{repo_state: now}) do
@@ -45,22 +44,16 @@ defmodule GithubPoller.PullRequest do
     |> GithubPoller.Client.request()
     |> case do
       {:ok, data} ->
-        {:ok, %PullRequest.State{repo_state: transform(data)}}
+        {:ok, %PullRequest.State{repo_state: normalize(data)}}
 
       error ->
         error
     end
   end
 
-  defp transform(data) do
+  defp normalize(data) do
     data
-    |> Enum.map(fn pr ->
-      %{
-        number: Map.get(pr, "number"),
-        hash: Map.get(pr, "headRefOid"),
-        title: Map.get(pr, "title")
-      }
-    end)
+    |> Enum.map(&%{number: Map.get(&1, "number"), hash: Map.get(&1, "headRefOid")})
     |> MapSet.new()
   end
 end
