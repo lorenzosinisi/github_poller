@@ -21,19 +21,18 @@ defmodule Github.Client do
     end
   end
 
-  @callback api_post(map()) :: {:ok, map()} | {:error, any()} 
+  @callback api_post(map()) :: {:ok, map()} | {:error, any()}
   def api_post(request) do
     http_client().request(request, __MODULE__)
   end
 
   def latest_prs(token, owner, repository) when is_binary(token) do
-    http_client().build(
-      :post,
-      @api_endpoint,
-      [{"Authorization", "bearer #{token}"}],
-      lastest_prs_query(owner, repository)
-    )
-    |> request()
+    client = http_client()
+    headers = [{"Authorization", "bearer #{token}"}]
+    body = lastest_prs_query(owner, repository)
+    http_request = client.build(:post, @api_endpoint, headers, body)
+
+    request(http_request)
   end
 
   defp lastest_prs_query(owner, repository) when is_binary(owner) and is_binary(repository) do

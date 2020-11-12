@@ -29,27 +29,9 @@ defmodule Github.Poller do
   end
 
   @impl GenServer
-  def handle_info({:new_repo_state, new_repo_state}, %{repo_state: %{map: map}} = state)
-      when map_size(map) > 0 do
-    {changes, new_state} = Repo.update_state(state, new_repo_state)
-
-    if Enum.any?(changes) do
-      Logger.debug("#{__MODULE__} received :new_repo_state with changes: #{inspect(changes)}")
-
-      send(
-        state.notify,
-        {:repo_update, %{owner: new_state.owner, repo: new_state.repo, changes: changes}}
-      )
-    else
-      Logger.debug("#{__MODULE__} received :new_repo_state with 0 changes")
-    end
-
-    {:noreply, new_state}
-  end
-
-  @impl GenServer
   def handle_info({:new_repo_state, new_repo_state}, state) do
-    {_changes, new_state} = Repo.update_state(state, new_repo_state)
+    {changes, new_state} = Repo.update_state(state, new_repo_state)
+    :ok = notify_subscriber(changes, new_state)
     {:noreply, new_state}
   end
 
@@ -57,6 +39,17 @@ defmodule Github.Poller do
   def handle_info({:repo_update, _repo_state} = message, state) do
     Logger.debug("#{__MODULE__} received #{inspect(message)}")
     {:noreply, state}
+  end
+
+  defp notify_subscriber(changes, state) do
+    if Enum.any?(changes) && Enum.any?(state.repo_state) do
+      send(
+        state.notify,
+        {:repo_update, %{owner: state.owner, repo: state.repo, changes: changes}}
+      )
+    else
+      :ok
+    end
   end
 
   defp start_poller(state) do
@@ -67,13 +60,13 @@ defmodule Github.Poller do
     github_opts = Map.take(state, [:api_token, :owner, :repo])
     every = Map.get(state, :every)
 
-    Parent.start_child({
-      Periodic,
-      every: every,
-      run: fn -> poll(parent, github_opts) end,
-      initial_delay: 0,
-      on_overlap: :stop_previous
-    })
+    Parent.start_child(
+      {Periodic,
+       every: every,
+       run: fn -> poll(parent, github_opts) end,
+       initial_delay: 0,
+       on_overlap: :stop_previous}
+    )
   end
 
   defp poll(parent, github_opts) do
