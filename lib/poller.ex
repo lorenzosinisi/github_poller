@@ -29,26 +29,28 @@ defmodule Github.Poller do
   end
 
   @impl GenServer
-  def handle_info({:new_repo_state, new_repo_state}, %{initialized: true} = state) do
-    changes = Repo.changes(state, new_repo_state)
+  def handle_info({:new_repo_state, new_repo_state}, %{repo_state: %{map: map}} = state)
+      when map_size(map) > 0 do
+    {changes, new_state} = Repo.update_state(state, new_repo_state)
 
     if Enum.any?(changes) do
       Logger.debug("#{__MODULE__} received :new_repo_state with changes: #{inspect(changes)}")
 
       send(
         state.notify,
-        {:repo_update, %{owner: state.owner, repo: state.repo, changes: changes}}
+        {:repo_update, %{owner: new_state.owner, repo: new_state.repo, changes: changes}}
       )
     else
       Logger.debug("#{__MODULE__} received :new_repo_state with 0 changes")
     end
 
-    {:noreply, Repo.update_state(state, new_repo_state)}
+    {:noreply, new_state}
   end
 
   @impl GenServer
   def handle_info({:new_repo_state, new_repo_state}, state) do
-    {:noreply, Repo.update_state(state, new_repo_state)}
+    {_changes, new_state} = Repo.update_state(state, new_repo_state)
+    {:noreply, new_state}
   end
 
   defp start_poller(state) do

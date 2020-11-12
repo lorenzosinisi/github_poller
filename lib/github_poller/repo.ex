@@ -3,12 +3,12 @@ defmodule Github.Repo do
   Context responsible of dealing with Github PRs state
   """
 
-  defstruct initialized: false,
-            repo_state: MapSet.new(),
+  defstruct repo_state: MapSet.new(),
             owner: "",
             repo: "",
             notify: nil,
             api_token: nil,
+            changes: MapSet.new(),
             every: :timer.seconds(5)
 
   @type t :: %__MODULE__{}
@@ -36,7 +36,7 @@ defmodule Github.Repo do
     diff = changes(state, new_state)
     intersection = MapSet.intersection(state.repo_state, new_state.repo_state)
     new_repo_state = MapSet.union(intersection, diff)
-    %{state | repo_state: new_repo_state, initialized: true}
+    {diff, %{state | repo_state: new_repo_state}}
   end
 
   def fetch_repo_state!(%{api_token: token, owner: owner, repo: repository}) do

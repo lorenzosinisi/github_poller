@@ -1,4 +1,5 @@
 defmodule Github.ClientTest do
+  @moduledoc false
   use ExUnit.Case
   alias Github.Client
   doctest Github.Poller
