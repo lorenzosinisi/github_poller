@@ -1,4 +1,4 @@
-defmodule GithubPoller.Client do
+defmodule Github.Client do
   @moduledoc "Wrapper around the HTTP client implemented to communicate with the Github APIs"
   @api_endpoint "https://api.github.com/graphql"
 
@@ -8,11 +8,10 @@ defmodule GithubPoller.Client do
 
   defdelegate encode!(body), to: Jason
   defdelegate decode!(body), to: Jason
-  defdelegate build(method, endpoint, headers, body), to: Finch
 
-  @spec request(Finch.Request.t(), atom()) :: {:ok, map()} | {:error, any()}
-  def request(%Finch.Request{} = request, http_client_mod \\ Finch) do
-    case http_client_mod.request(request, __MODULE__) do
+  @spec request(map()) :: {:ok, map()} | {:error, any()}
+  def request(%{} = request) do
+    case http_client().request(request, __MODULE__) do
       {:ok, %{status: 200, body: body}} ->
         response = decode!(body)
         {:ok, get_in(response, ["data", "repository", "pullRequests", "nodes"])}
@@ -22,14 +21,19 @@ defmodule GithubPoller.Client do
     end
   end
 
-  @spec latest_prs(token(), owner(), reponsitory()) :: Finch.Request.t()
+  @callback api_post(map()) :: {:ok, map()} | {:error, any()} 
+  def api_post(request) do
+    http_client().request(request, __MODULE__)
+  end
+
   def latest_prs(token, owner, repository) when is_binary(token) do
-    build(
+    http_client().build(
       :post,
       @api_endpoint,
       [{"Authorization", "bearer #{token}"}],
       lastest_prs_query(owner, repository)
     )
+    |> request()
   end
 
   defp lastest_prs_query(owner, repository) when is_binary(owner) and is_binary(repository) do
@@ -48,5 +52,9 @@ defmodule GithubPoller.Client do
       }
       """
     })
+  end
+
+  defp http_client do
+    Application.fetch_env!(:github_poller, :http_client)
   end
 end

@@ -1,6 +1,6 @@
-defmodule GithubPoller do
+defmodule Github.Poller do
   use Parent.GenServer
-  alias GithubPoller.PullRequest
+  alias Github.Repo
   require Logger
   # Expected usage:
   #
@@ -20,7 +20,7 @@ defmodule GithubPoller do
   def init(opts) do
     # repo_state will contain the known state of the given repo, such as open pull request with
     # the last fetched data
-    state = Enum.into(opts, PullRequest.new())
+    state = Enum.into(opts, Repo.new())
 
     # starts the periodic poller
     start_poller(state)
@@ -30,7 +30,7 @@ defmodule GithubPoller do
 
   @impl GenServer
   def handle_info({:new_repo_state, new_repo_state}, %{initialized: true} = state) do
-    changes = PullRequest.changes(state, new_repo_state)
+    changes = Repo.changes(state, new_repo_state)
 
     if Enum.any?(changes) do
       Logger.debug("#{__MODULE__} received :new_repo_state with changes: #{inspect(changes)}")
@@ -43,12 +43,12 @@ defmodule GithubPoller do
       Logger.debug("#{__MODULE__} received :new_repo_state with 0 changes")
     end
 
-    {:noreply, PullRequest.update_state(state, new_repo_state)}
+    {:noreply, Repo.update_state(state, new_repo_state)}
   end
 
   @impl GenServer
   def handle_info({:new_repo_state, new_repo_state}, state) do
-    {:noreply, PullRequest.update_state(state, new_repo_state)}
+    {:noreply, Repo.update_state(state, new_repo_state)}
   end
 
   defp start_poller(state) do
@@ -69,7 +69,7 @@ defmodule GithubPoller do
   end
 
   defp poll(parent, github_opts) do
-    {:ok, new_state} = PullRequest.fetch_repo_state!(github_opts)
+    {:ok, new_state} = Repo.fetch_repo_state!(github_opts)
     send(parent, {:new_repo_state, new_state})
   end
 end
