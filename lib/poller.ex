@@ -53,6 +53,12 @@ defmodule Github.Poller do
     {:noreply, new_state}
   end
 
+  @impl GenServer
+  def handle_info({:repo_update, _repo_state} = message, state) do
+    Logger.debug("#{__MODULE__} received #{inspect(message)}")
+    {:noreply, state}
+  end
+
   defp start_poller(state) do
     # This will start the periodic poller as a child of this `Parent.GenServer`. The poller will
     # ask github for new data every `x` and send the message to this process.
