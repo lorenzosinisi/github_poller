@@ -3,12 +3,12 @@ defmodule Github.Repo do
   Context responsible of dealing with Github PRs state
   """
 
-  defstruct repo_state: MapSet.new(),
+  defstruct repo_state: Map.new(),
             owner: "",
             repo: "",
             notify: nil,
             api_token: nil,
-            changes: MapSet.new(),
+            changes: Map.new(),
             every: :timer.seconds(5)
 
   @type t :: %__MODULE__{}
@@ -28,15 +28,22 @@ defmodule Github.Repo do
   @spec new() :: Github.Repo.t()
   def new(), do: %Github.Repo{notify: self()}
 
-  def changes(%Github.Repo{repo_state: before}, %Github.Repo{repo_state: now}) do
-    MapSet.difference(now, before)
+  def changes(%Github.Repo{repo_state: previous_prs}, %Github.Repo{repo_state: new_prs}) do
+    Enum.reduce(new_prs, {Map.new(), previous_prs}, fn {number, pr}, {diff, prs} ->
+      previous_hash = get_in(prs, [number, :hash])
+      new_hash = get_in(pr, [:hash])
+
+      if previous_hash === new_hash do
+        {diff, prs}
+      else
+        {Map.put(diff, number, pr), Map.put(prs, number, pr)}
+      end
+    end)
   end
 
   def update_state(state, new_state) do
-    diff = changes(state, new_state)
-    intersection = MapSet.intersection(state.repo_state, new_state.repo_state)
-    new_repo_state = MapSet.union(intersection, diff)
-    {diff, %{state | repo_state: new_repo_state}}
+    {diff, new_state} = changes(state, new_state)
+    {diff, %{state | repo_state: new_state}}
   end
 
   def fetch_repo_state!(%{api_token: token, owner: owner, repo: repository}) do
@@ -52,8 +59,17 @@ defmodule Github.Repo do
   end
 
   defp normalize(data) do
-    data
-    |> Enum.map(&%{number: Map.get(&1, "number"), hash: Map.get(&1, "headRefOid")})
-    |> MapSet.new()
+    Enum.map(
+      data,
+      &{
+        Map.get(&1, "number"),
+        %{
+          number: Map.get(&1, "number"),
+          title: Map.get(&1, "title"),
+          hash: Map.get(&1, "headRefOid")
+        }
+      }
+    )
+    |> Enum.into(%{})
   end
 end

@@ -41,15 +41,17 @@ defmodule Github.Poller do
     {:noreply, state}
   end
 
-  defp notify_subscriber(changes, state) do
-    if Enum.any?(changes) && Enum.any?(state.repo_state) do
-      send(
-        state.notify,
-        {:repo_update, %{owner: state.owner, repo: state.repo, changes: changes}}
-      )
-    else
-      :ok
-    end
+  defp notify_subscriber(%{changes: diff}, _) when map_size(diff) == 0 do
+    :ok
+  end
+
+  defp notify_subscriber(changes, %{repo_state: _} = state) do
+    send(
+      state.notify,
+      {:repo_update, %{owner: state.owner, repo: state.repo, changes: changes}}
+    )
+
+    :ok
   end
 
   defp start_poller(state) do
