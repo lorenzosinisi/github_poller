@@ -20,6 +20,7 @@ defmodule Github.Poller do
   def init(opts) do
     # repo_state will contain the known state of the given repo, such as open pull request with
     # the last fetched data
+    IO.inspect(opts)
     state = Enum.into(opts, Repo.new())
 
     # starts the periodic poller

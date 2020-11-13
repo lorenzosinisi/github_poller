@@ -28,19 +28,6 @@ defmodule Github.Repo do
   @spec new() :: Github.Repo.t()
   def new(), do: %Github.Repo{notify: self()}
 
-  def changes(%Github.Repo{repo_state: previous_prs}, %Github.Repo{repo_state: new_prs}) do
-    Enum.reduce(new_prs, {Map.new(), previous_prs}, fn {number, pr}, {diff, prs} ->
-      previous_hash = get_in(prs, [number, :hash])
-      new_hash = get_in(pr, [:hash])
-
-      if previous_hash === new_hash do
-        {diff, prs}
-      else
-        {Map.put(diff, number, pr), Map.put(prs, number, pr)}
-      end
-    end)
-  end
-
   def update_state(state, new_state) do
     {diff, new_state} = changes(state, new_state)
     {diff, %{state | repo_state: new_state}}
@@ -56,6 +43,37 @@ defmodule Github.Repo do
       error ->
         error
     end
+  end
+
+  defp changes(%Github.Repo{repo_state: previous_prs}, %Github.Repo{repo_state: new_prs}) do
+    Enum.reduce(new_prs, {Map.new(), previous_prs}, fn {number, pr}, {diff, prs} ->
+      previous_hash = get_in(prs, [number, :hash])
+      new_hash = get_in(pr, [:hash])
+
+      cond do
+        # the PR is new, the PRs in the state are empty
+        previous_hash == nil && map_size(prs) == 0 ->
+          {diff, Map.put(prs, number, pr)}
+
+        # we already know about some PRs, but this is a new one
+        previous_hash == nil ->
+          {Map.put(diff, number, pr), Map.put(prs, number, pr)}
+
+        # there is no hash, what?
+        new_hash == nil ->
+          raise("the key hash must be present")
+
+        # no change detected
+        previous_hash == new_hash ->
+          # we refresh the PR struct anyway
+          {diff, Map.put(prs, number, pr)}
+
+        # change detected! The hash has changed, which means that the code has changed
+        previous_hash !== new_hash ->
+          # report this as change and refresh the state as well
+          {Map.put(diff, number, pr), Map.put(prs, number, pr)}
+      end
+    end)
   end
 
   defp normalize(data) do
