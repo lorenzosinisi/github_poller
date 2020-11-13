@@ -20,7 +20,6 @@ defmodule Github.Poller do
   def init(opts) do
     # repo_state will contain the known state of the given repo, such as open pull request with
     # the last fetched data
-    IO.inspect(opts)
     state = Enum.into(opts, Repo.new())
 
     # starts the periodic poller
@@ -32,7 +31,7 @@ defmodule Github.Poller do
   @impl GenServer
   def handle_info({:new_repo_state, new_repo_state}, state) do
     {changes, new_state} = Repo.update_state(state, new_repo_state)
-    :ok = notify_subscriber(changes, new_state)
+    if Enum.any?(changes), do: notify_subscriber(changes, new_state)
     {:noreply, new_state}
   end
 
@@ -42,17 +41,13 @@ defmodule Github.Poller do
     {:noreply, state}
   end
 
-  defp notify_subscriber(%{changes: diff}, _) when map_size(diff) == 0 do
-    :ok
-  end
-
   defp notify_subscriber(changes, %{repo_state: _} = state) do
+    IO.inspect("NOTIFY")
+
     send(
       state.notify,
       {:repo_update, %{owner: state.owner, repo: state.repo, changes: changes}}
     )
-
-    :ok
   end
 
   defp start_poller(state) do
