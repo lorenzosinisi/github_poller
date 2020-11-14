@@ -40,7 +40,7 @@ defmodule Github.Client do
   end
 
   defp http_client do
-    Application.get_env(:github_poller, :http_client, __MODULE__.HttpClient)
+    if Github.Client.Test.used?(), do: Github.Client.Test.Http, else: __MODULE__.Http.Real
   end
 
   defmodule Http do
