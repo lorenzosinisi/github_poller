@@ -1,8 +1,6 @@
 defmodule Github.ClientTest do
-  @moduledoc false
   use ExUnit.Case, async: true
   alias Github.Client
-  doctest Github.Poller
 
   describe "lastest_prs/2" do
     test "returns open pull requests on success" do
