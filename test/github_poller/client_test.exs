@@ -9,23 +9,21 @@ defmodule Github.ClientTest do
     on_exit(&Client.Test.disable/0)
   end
 
-  describe "lastest_prs/2 errored" do
-    test "when the response is something else" do
-      Client.Test.expect({:ok, 400, "something went wrong"})
-
-      assert Client.latest_prs("Token", "some_owner", "some_repo") ==
-               {:error, "400:\nsomething went wrong"}
-    end
-  end
-
-  describe "lastest_prs/2 successful" do
-    test "when the response is 200 and there is a body" do
+  describe "lastest_prs/2" do
+    test "returns open pull requests on success" do
       pr1 = Client.Test.pr()
       pr2 = Client.Test.pr()
 
       Client.Test.expect({:ok, 200, Client.Test.prs([pr1, pr2])})
 
       assert Client.latest_prs("Token", "some_owner", "some_repo") == {:ok, [pr1, pr2]}
+    end
+
+    test "returns error if reponse status is not 200" do
+      Client.Test.expect({:ok, 400, "something went wrong"})
+
+      assert Client.latest_prs("Token", "some_owner", "some_repo") ==
+               {:error, "400:\nsomething went wrong"}
     end
   end
 end
