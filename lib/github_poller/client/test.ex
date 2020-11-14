@@ -3,8 +3,10 @@ defmodule Github.Client.Test do
   def disable, do: :persistent_term.put(__MODULE__, false)
   def used?, do: :persistent_term.get(__MODULE__, false)
 
-  def expect(response),
-    do: Mox.expect(__MODULE__.Http, :request, fn _, _ -> response end)
+  def expect_latest_prs(owner, repo, response) do
+    request = Github.Client.latest_prs_query(owner, repo)
+    Mox.expect(__MODULE__.Http, :request, fn _, ^request -> response end)
+  end
 
   def prs(prs),
     do: Jason.encode!(%{"data" => %{"repository" => %{"pullRequests" => %{"nodes" => prs}}}})

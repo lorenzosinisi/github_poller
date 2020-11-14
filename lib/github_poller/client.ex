@@ -6,7 +6,7 @@ defmodule Github.Client do
 
   def latest_prs(token, owner, repository) when is_binary(token) do
     headers = [{"Authorization", "bearer #{token}"}]
-    body = lastest_prs_query(owner, repository)
+    body = latest_prs_query(owner, repository)
 
     case http_client().request(headers, body) do
       {:ok, 200, body} ->
@@ -21,7 +21,8 @@ defmodule Github.Client do
     end
   end
 
-  defp lastest_prs_query(owner, repository) when is_binary(owner) and is_binary(repository) do
+  @doc false
+  def latest_prs_query(owner, repository) do
     Jason.encode!(%{
       "query" => """
         query {
