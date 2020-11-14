@@ -1,6 +1,7 @@
 defmodule Github.HttpFakeClient do
-  @moduledoc "I am a mock"
-  @behaviour Github.Client
+  @moduledoc false
+  @behaviour Github.Client.Http
+
   @success_json %{
     "data" => %{
       "repository" => %{
@@ -32,20 +33,15 @@ defmodule Github.HttpFakeClient do
     }
   }
 
-  def api_post(_req) do
-    {:ok, %{status: 200, body: Jason.encode!(@success_json)}}
-  end
-
-  def request(req, _), do: api_post(req)
-
-  def build(_, _, _, _), do: %{}
+  @impl Github.Client.Http
+  def request(_headers, _body),
+    do: {:ok, 200, Jason.encode!(@success_json)}
 end
 
 defmodule Github.HttpFakeClientError do
-  @moduledoc "I am a mock"
-  @behaviour Github.Client
-  @error_json {:error, %{status: 400, body: "something went wrong"}}
-  def api_post(_req), do: @error_json
-  def request(req, _), do: api_post(req)
-  def build(_, _, _, _), do: %{}
+  @moduledoc false
+  @behaviour Github.Client.Http
+
+  @impl Github.Client.Http
+  def request(_headers, _body), do: {:ok, 400, "something went wrong"}
 end

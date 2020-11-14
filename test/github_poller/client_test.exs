@@ -15,9 +15,8 @@ defmodule Github.ClientTest do
     end
 
     test "when the response is something else" do
-      assert {:error, %{status: 400, body: "something went wrong"}} =
-               "Token"
-               |> Client.latest_prs("lorenzosinisi", "somerepo")
+      assert Client.latest_prs("Token", "lorenzosinisi", "somerepo") ==
+               {:error, "400:\nsomething went wrong"}
     end
   end
 
