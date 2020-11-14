@@ -25,5 +25,10 @@ defmodule Github.ClientTest do
       assert Client.latest_prs("Token", "some_owner", "some_repo") ==
                {:error, "400:\nsomething went wrong"}
     end
+
+    test "returns client error" do
+      Client.Test.expect({:error, :client_error})
+      assert Client.latest_prs("Token", "some_owner", "some_repo") == {:error, :client_error}
+    end
   end
 end
