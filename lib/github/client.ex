@@ -47,9 +47,13 @@ defmodule Github.Client do
   defmodule Http do
     @moduledoc false
 
-    @callback request(headers :: [{String.t(), String.t()}], body :: String.t()) ::
-                {:ok, status :: pos_integer, body :: String.t()}
-                | {:error, any()}
+    @type headers :: [{String.t(), String.t()}]
+
+    @type response ::
+            {:ok, status :: pos_integer, body :: String.t()}
+            | {:error, any()}
+
+    @callback request(headers, payload :: String.t()) :: response
   end
 
   defmodule Http.Real do

@@ -1,16 +1,25 @@
 defmodule Github.Client.Test do
+  @spec enable :: :ok
   def enable, do: :persistent_term.put(__MODULE__, true)
+
+  @spec disable :: :ok
   def disable, do: :persistent_term.put(__MODULE__, false)
+
+  @spec used? :: boolean
   def used?, do: :persistent_term.get(__MODULE__, false)
 
+  @spec expect_latest_prs(String.t(), String.t(), Github.Client.Http.response()) :: :ok
   def expect_latest_prs(owner, repo, response) do
     request = Github.Client.latest_prs_query(owner, repo)
     Mox.expect(__MODULE__.Http, :request, fn _, ^request -> response end)
+    :ok
   end
 
+  @spec prs([map]) :: String.t()
   def prs(prs),
     do: Jason.encode!(%{"data" => %{"repository" => %{"pullRequests" => %{"nodes" => prs}}}})
 
+  @spec pr :: map
   def pr do
     %{
       "baseRefName" => "master",
