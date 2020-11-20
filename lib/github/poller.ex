@@ -1,16 +1,19 @@
 defmodule Github.Poller do
+  @moduledoc """
+   Expected usage:
+
+    GithubPoller.start_link(api_token: "foo", owner: "bar", repo: "baz", notify: self())
+
+   or as a child of a supervisor/parent:
+
+    {Github.Poller, api_token: "foo", ...}
+
+   This will start the poller which will send updates (e.g. PR changed) to the `:notify` process.
+  """
   use Parent.GenServer
   alias Github.Repo
   require Logger
-  # Expected usage:
-  #
-  #   GithubPoller.start_link(api_token: "foo", owner: "bar", repo: "baz", notify: self())
-  #
-  # or as a child of a supervisor/parent:
-  #
-  #  {Github.Poller, api_token: "foo", ...}
-  #
-  # This will start the poller which will send updates (e.g. PR changed) to the `:notify` process.
+
   def start_link(opts) do
     {gen_server_opts, opts} = Keyword.split(opts, [:name])
     Parent.GenServer.start_link(__MODULE__, opts, gen_server_opts)
@@ -42,8 +45,6 @@ defmodule Github.Poller do
   end
 
   defp notify_subscriber(changes, %{repo_state: _} = state) do
-    IO.inspect("NOTIFY")
-
     send(
       state.notify,
       {:repo_update, %{owner: state.owner, repo: state.repo, changes: changes}}

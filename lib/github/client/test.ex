@@ -1,4 +1,7 @@
 defmodule Github.Client.Test do
+  @moduledoc """
+  This module can be used when running your unit tests
+  """
   @spec enable :: :ok
   def enable, do: :persistent_term.put(__MODULE__, true)
 
