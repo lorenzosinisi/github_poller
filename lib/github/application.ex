@@ -1,4 +1,4 @@
-defmodule GithubPoller.Application do
+defmodule Github.Application do
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
   @moduledoc false
@@ -7,12 +7,12 @@ defmodule GithubPoller.Application do
 
   def start(_type, _args) do
     children = [
-      {Finch, name: GithubPoller.Client}
+      {Finch, name: Github.Client}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: GithubPoller.Supervisor]
+    opts = [strategy: :one_for_one, name: Github.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end

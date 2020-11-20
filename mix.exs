@@ -1,4 +1,4 @@
-defmodule GithubPoller.MixProject do
+defmodule Github.MixProject do
   use Mix.Project
 
   def project do
@@ -7,7 +7,9 @@ defmodule GithubPoller.MixProject do
       version: "0.1.0",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      elixirc_options: [warnings_as_errors: true],
+      elixirc_paths: elixirc_paths(Mix.env())
     ]
   end
 
@@ -15,10 +17,13 @@ defmodule GithubPoller.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {GithubPoller.Application, []}
+      mod: {Github.Application, []}
     ]
   end
 
+  # ensure test/support is compiled
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
@@ -26,7 +31,8 @@ defmodule GithubPoller.MixProject do
       {:jason, "~> 1.2"},
       {:parent, "~> 0.11.2"},
       {:credo, "~> 1.5", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:mox, "~> 1.0", only: :test}
     ]
   end
 end
