@@ -1,6 +1,5 @@
 defmodule Github.RepoTest do
-  @moduledoc false
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   alias Github.Repo
   doctest Github.Repo
 
