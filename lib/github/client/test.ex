@@ -1,9 +1,9 @@
 defmodule Github.Client.Test do
   @moduledoc """
-  This module can be used when running your unit tests
+  This module can be used when running your unit tests, 
+  it is not available in production
   """
-  @env Mix.env()
-  if @env == :test do
+  if Mix.env() == :test do
     @spec enable :: :ok
     def enable, do: :persistent_term.put(__MODULE__, true)
 
@@ -38,14 +38,12 @@ defmodule Github.Client.Test do
       }
     end
 
-    defp unique(title),
-      do: "#{title}#{System.unique_integer([:monotonic, :positive])}"
-
     defp unique_sha,
       do: :crypto.hash(:sha, :crypto.strong_rand_bytes(16)) |> Base.encode16(case: :lower)
 
+    defp unique(data),
+      do: "#{data}#{System.unique_integer([:monotonic, :positive])}"
+
     Mox.defmock(__MODULE__.Http, for: Github.Client.Http)
-  else
-    def used?, do: false
   end
 end

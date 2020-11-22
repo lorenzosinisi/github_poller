@@ -3,12 +3,13 @@ defmodule Github.Client do
   @type token :: String.t()
   @type owner :: String.t()
   @type reponsitory :: String.t()
+  @env Mix.env()
 
   def latest_prs(token, owner, repository) when is_binary(token) do
     headers = [{"Authorization", "bearer #{token}"}]
     body = latest_prs_query(owner, repository)
 
-    case http_client().request(headers, body) do
+    case http_client(@env).request(headers, body) do
       {:ok, 200, body} ->
         response = Jason.decode!(body)
         {:ok, get_in(response, ["data", "repository", "pullRequests", "nodes"])}
@@ -40,9 +41,11 @@ defmodule Github.Client do
     })
   end
 
-  defp http_client do
+  defp http_client(:test) do
     if Github.Client.Test.used?(), do: Github.Client.Test.Http, else: __MODULE__.Http.Real
   end
+
+  defp http_client(_), do: __MODULE__.Http.Real
 
   defmodule Http do
     @moduledoc false
