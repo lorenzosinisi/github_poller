@@ -26,7 +26,7 @@ defmodule Github.Repo do
   end
 
   @spec new() :: Github.Repo.t()
-  def new(), do: %Github.Repo{notify: self()}
+  def new, do: %Github.Repo{notify: self()}
 
   def update_state(state, new_state) do
     {diff, new_state} = changes(state, new_state)
