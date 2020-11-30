@@ -1,6 +1,6 @@
 defmodule Github.Client.Test do
   @moduledoc """
-  This module can be used when running your unit tests, 
+  This module can be used when running your unit tests,
   it is not available in production
   """
   if Mix.env() == :test do
@@ -45,5 +45,7 @@ defmodule Github.Client.Test do
       do: "#{data}#{System.unique_integer([:monotonic, :positive])}"
 
     Mox.defmock(__MODULE__.Http, for: Github.Client.Http)
+  else
+    def used?, do: false
   end
 end

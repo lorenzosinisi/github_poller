@@ -1,55 +1,34 @@
 # GithubPoller
 
-**WIP implementation of Github Client Poller**
+**Receive a message every time a PR is updated, checking them at constant intervals**
 
-## Client Usage
+The poller will periodically check the PRs on your Github repository and send a message
+to the GenServer which has spawned the process if any PR has changed.
+
+
+## Client Usage:
 
 ```elixir
 token = "your github token here"
 github_org_name = "lorenzosinisi"
-github_repo_name = "retex"
-GithubPoller.Client.latest_prs(token, github_org_name, github_repo_name)
-{:ok,
- %{
-   "data" => %{
-     "repository" => %{
-       "pullRequests" => %{
-         "nodes" => [
-           %{
-             "baseRefName" => "master",
-             "headRefName" => "feature/rule_engine",
-             "headRefOid" => "6330d7a229f61d9c47da643d67f1ffddbc0691b7",
-             "mergeable" => "UNKNOWN",
-             "number" => 11,
-             "potentialMergeCommit" => nil,
-             "reviews" => %{"nodes" => []},
-             "title" => "Feature/rule engine"
-           },
-           %{
-             "baseRefName" => "master",
-             "headRefName" => "generic-attributes",
-             "headRefOid" => "d52a426d99b72ba222be93dfa9ab948963516fa0",
-             "mergeable" => "UNKNOWN",
-             "number" => 10,
-             "potentialMergeCommit" => nil,
-             "reviews" => %{"nodes" => []},
-             "title" => "Generic attributes"
-           },
-           %{
-             "baseRefName" => "master",
-             "headRefName" => "bug/negated-attributes-should-act-as-filters",
-             "headRefOid" => "bb1646ecf0d1280f759a350b600a04f0c64ac901",
-             "mergeable" => "UNKNOWN",
-             "number" => 9,
-             "potentialMergeCommit" => nil,
-             "reviews" => %{"nodes" => []},
-             "title" => "BUG - Reproduce the issue"
-           },
-           ...
-         ]
-       }
-     }
-   }
- }}
+github_repo_name = "github_poller"
+notify = self() # the GenServer will receive info messages when some PR is updated, default to self()
+Github.Poller.start_link(api_token: token, owner: github_org_name, repo: github_repo_name, every: :timer.seconds(1), notify: notify)
 ```
+
+## Implement your own GenServer that will be notified of PR changes:
+
+```elixir
+defmodule Example do
+  use GenServer
+  ...
+  # add this
+  @impl GenServer
+  def handle_info({:repo_update, _repo_state} = message, state) do
+    Logger.debug("#{__MODULE__} received #{inspect(message)}")
+    {:noreply, state}
+  end
+end
+```
+
 
